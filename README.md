@@ -20,9 +20,10 @@ normal web address.
 - **Resources** — editable links to the rules, quick‑start, handbook, blank
   sheet, VTT, and house rules, plus a 7th‑edition stat reference.
 - **Campaigns** — create, edit, delete. Each has **Assets & Handouts**,
-  **Investigators & NPCs**, and a **Map**. Anything can be marked
-  **Keeper‑only**, and each campaign has private **Keeper's Secrets** notes
-  only staff can read.
+  **Investigators & NPCs**, and a **Map**. Assets can carry an **image**
+  (handout scans, photos, portraits) shown on the card. Anything can be
+  marked **Keeper‑only** (its image is hidden from players too), and each
+  campaign has private **Keeper's Secrets** notes only staff can read.
 - **Battle maps** (Roll20‑style) — on a campaign's **Map** tab the Keeper
   uploads a map image and drops tokens; players can place their own
   investigator and **drag** their token around. Everyone sees moves within a
