@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/32441773/README.md)
 # The Keeper's Table
 
 A private, self-hosted web hub for a **Call of Cthulhu** group — 1920s
