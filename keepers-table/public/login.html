@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enter — The Keeper's Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Josefin+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth">
+    <div class="auth-hero">
+      <svg class="sigil" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" stroke="#c8a951" stroke-width="1.2"/>
+        <circle cx="24" cy="24" r="16" stroke="#9c7f37" stroke-width=".8"/>
+        <path d="M24 5 L29.5 19 L44 19 L32.5 28 L37 43 L24 34 L11 43 L15.5 28 L4 19 L18.5 19 Z" stroke="#e6cd82" stroke-width="1" fill="rgba(200,169,81,.12)"/>
+        <circle cx="24" cy="24" r="3.4" fill="#e6cd82"/>
+      </svg>
+      <h1 id="hero-title">The Keeper's <em>Table</em></h1>
+      <p id="hero-tag">A private circle for players of Call of Cthulhu</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-toggle" id="toggle" hidden>
+        <button data-mode="login" class="on">Sign in</button>
+        <button data-mode="register" id="tab-register" hidden>Join with a code</button>
+      </div>
+      <h2 id="form-title">Sign in</h2>
+      <div class="asub" id="form-sub">Welcome back to the table</div>
+      <p class="auth-err" id="err"></p>
+      <form id="form" autocomplete="on">
+        <div class="field" id="f-display" hidden>
+          <label for="displayName">Display name</label>
+          <input id="displayName" name="displayName" type="text" autocomplete="name" placeholder="How your name shows at the table">
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field" id="f-invite" hidden>
+          <label for="inviteCode">Invite code</label>
+          <input id="inviteCode" name="inviteCode" type="text" placeholder="The code your Keeper gave you">
+        </div>
+        <button class="btn btn-gold" type="submit" id="submit">Sign in</button>
+      </form>
+    </div>
+    <div class="auth-foot">✦ ☾ ✦</div>
+  </div>
+</div>
+<script>
+(function(){
+  var mode = "login"; // login | register | setup
+  var boot = { needsSetup:false, inviteEnabled:false };
+  var el = function(id){ return document.getElementById(id); };
+  function setErr(m){ el("err").textContent = m || ""; }
+
+  function apply(){
+    var isSetup = mode==="setup", isReg = mode==="register";
+    el("f-display").hidden = mode==="login";
+    el("f-invite").hidden = !isReg;
+    el("password").setAttribute("autocomplete", mode==="login"?"current-password":"new-password");
+    if(isSetup){
+      el("form-title").textContent = "Create your Admin account";
+      el("form-sub").textContent = "You are the first to sit at the table — the Admin of this hub";
+      el("submit").textContent = "Light the candles";
+      el("toggle").hidden = true;
+    } else if(isReg){
+      el("form-title").textContent = "Join the table";
+      el("form-sub").textContent = "With the code your Keeper gave you";
+      el("submit").textContent = "Take my seat";
+    } else {
+      el("form-title").textContent = "Sign in";
+      el("form-sub").textContent = "Welcome back to the table";
+      el("submit").textContent = "Sign in";
+    }
+    setErr("");
+  }
+
+  fetch("/api/bootstrap").then(function(r){return r.json();}).then(function(b){
+    boot = b;
+    if(b.title) el("hero-title").innerHTML = escapeEm(b.title);
+    if(b.tag || b.tagline) el("hero-tag").textContent = b.tagline || b.tag;
+    if(b.signedIn){ location.href = "/"; return; }
+    if(b.needsSetup){ mode = "setup"; }
+    else if(b.inviteEnabled){ el("toggle").hidden = false; el("tab-register").hidden = false; }
+    apply();
+  }).catch(function(){ apply(); });
+
+  function escapeEm(t){
+    var d=document.createElement("div"); d.textContent=t; return d.innerHTML;
+  }
+
+  document.getElementById("toggle").addEventListener("click", function(e){
+    var b = e.target.closest("[data-mode]"); if(!b) return;
+    mode = b.getAttribute("data-mode");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){ x.classList.toggle("on", x.getAttribute("data-mode")===mode); });
+    apply();
+  });
+
+  el("form").addEventListener("submit", function(e){
+    e.preventDefault();
+    setErr("");
+    var body = {
+      username: el("username").value.trim(),
+      password: el("password").value,
+      displayName: el("displayName").value.trim(),
+      inviteCode: el("inviteCode").value.trim()
+    };
+    var url = mode==="setup" ? "/api/setup" : mode==="register" ? "/api/register" : "/api/login";
+    el("submit").disabled = true;
+    fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(res){
+        if(res.ok){ location.href = "/"; }
+        else { setErr(res.j.error || "Something went wrong."); el("submit").disabled = false; }
+      })
+      .catch(function(){ setErr("Could not reach the server."); el("submit").disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
